@@ -5,7 +5,7 @@ from PIL import Image
 import numpy as np
 from tensorflow.keras.models import load_model
 
-my_model = load_model('flower_model.h5') 
+my_model = load_model('flower_model_v.2.h5') 
 class_names=['Bush Clock Vine',
              'Common Lanthana',
              'Datura',
