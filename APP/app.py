@@ -75,3 +75,4 @@ elif mode == "Real-Time Camera":
 
         if cap:
             cap.release()
+
