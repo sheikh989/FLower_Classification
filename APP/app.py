@@ -84,7 +84,10 @@ from PIL import Image
 import os  # Added to check cloud environment
 
 # Load the model
-model = tf.keras.models.load_model("model_n.keras")
+# model = tf.keras.models.load_model("model_n.keras")
+cwd = os.getcwd()
+model_path = os.path.join(cwd, "model_n.keras")
+model = tf.keras.models.load_model(model_path)
 
 # Define class names
 class_names = [
