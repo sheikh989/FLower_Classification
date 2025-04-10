@@ -1,16 +1,14 @@
-import os
 import streamlit as st
 import numpy as np
-from PIL import Image
-from tensorflow.keras.models import load_model # type: ignore
 import tensorflow as tf
-import keras
+from tensorflow.keras.models import load_model
+from PIL import Image
+import cv2
 
+# Load the model
+model = tf.keras.models.load_model("model_n.keras")
 
-# Load trained model
-my_model  = tf.keras.models.load_model('model_n.keras')  
-
-# Class names (must match training order)
+# Define class names
 class_names = [
     'Bush Clock Vine', 'Common Lanthana', 'Datura', 'Hibiscus', 'Jatropha', 'Marigold',
     'Nityakalyani', 'Rose', 'Yellow_Daisy', 'adathoda', 'banana', 'champaka', 'chitrak',
@@ -19,25 +17,61 @@ class_names = [
     'thumba', 'touch me not', 'tridax procumbens', 'wild_potato_vine'
 ]
 
-# Streamlit UI
-st.markdown("## Identify The Flower in the Image")
-img = st.file_uploader("Upload an image", type=["jpg", "jpeg", "png"])
+# Title
+st.title("Flower Identifier")
 
-if img is not None:
-    # Display uploaded image
-    st.image(img, caption="Uploaded Image", use_column_width=True)
+# Choose mode
+mode = st.radio("Choose input method:", ["Upload Image", "Real-Time Camera"])
 
-    # Load and preprocess the image (do NOT resize or normalize manually if your model handles it)
-    image = Image.open(img).convert("RGB")
-    image = tf.keras.preprocessing.image.img_to_array(image)
-    image = tf.cast(image, tf.float32)
-    image = tf.expand_dims(image, 0)  # Add batch dimension
+if mode == "Upload Image":
+    st.markdown("### Upload an image of a flower")
+    img = st.file_uploader("Choose an image", type=["jpg", "jpeg", "png"])
+    
+    if img is not None:
+        st.image(img, caption="Uploaded Image", use_column_width=True)
 
-    if st.button("Identify Flower"):
-        prediction = my_model.predict(image)
-        predicted_class = np.argmax(prediction[0])
-        confidence = round(100 * np.max(prediction[0]), 2)
+        image = Image.open(img).convert("RGB")
+        image = tf.keras.preprocessing.image.img_to_array(image)
+        image = tf.cast(image, tf.float32)
+        image = tf.expand_dims(image, 0)
 
-        flower_name = class_names[predicted_class]
-        st.success(f"Predicted Flower: **{flower_name}**")
-        st.info(f"Confidence: **{confidence}%**")
+        if st.button("Identify Flower"):
+            prediction = model.predict(image)
+            predicted_class = np.argmax(prediction[0])
+            confidence = round(100 * np.max(prediction[0]), 2)
+            flower_name = class_names[predicted_class]
+
+            st.success(f"Predicted Flower: **{flower_name}**")
+            st.info(f"Confidence: **{confidence}%**")
+
+elif mode == "Real-Time Camera":
+    st.markdown("### Real-Time Flower Recognition")
+    run = st.checkbox('Start Camera')
+    FRAME_WINDOW = st.image([])
+
+    cap = None
+    if run:
+        cap = cv2.VideoCapture(0)
+        while run:
+            ret, frame = cap.read()
+            if not ret:
+                st.warning("Failed to access camera.")
+                break
+
+            img_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            img_array = tf.keras.preprocessing.image.img_to_array(img_rgb)
+            img_array = tf.expand_dims(tf.cast(img_array, tf.float32), 0)
+
+            predictions = model.predict(img_array)
+            predicted_class = np.argmax(predictions[0])
+            confidence = round(100 * np.max(predictions[0]), 2)
+            flower_name = class_names[predicted_class]
+
+            # Annotate frame
+            cv2.putText(frame, f"{flower_name} ({confidence}%)", (10, 30), 
+                        cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2, cv2.LINE_AA)
+
+            FRAME_WINDOW.image(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
+
+        if cap:
+            cap.release()
