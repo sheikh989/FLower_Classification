@@ -6,8 +6,7 @@ from PIL import Image
 import cv2
 
 # Load the model
-# model = tf.keras.models.load_model("model_n.keras")
-model = tf.keras.models.load_model("model_n.h5")
+model = tf.keras.models.load_model("model_n.keras")
 
 
 # Define class names
